@@ -50,6 +50,9 @@ on:
         description: 'Artifacts retention period'
         type: string
         default: 3
+      runner:
+        type: string
+        default:  '["Linux", "Build"]'
 
     outputs:
       build_conclusion:
@@ -103,10 +106,14 @@ on:
         options:
           - 3
 
+      runer:
+        type: string
+        default: '["Linux", "build"]'
+
 jobs:
   build:
     name: Build + LIT
-    runs-on: [Linux, build]
+    runs-on: ${{ fromJSON(inputs.runner) }}
     container:
       image: ${{ inputs.build_image }}
       options: -u 1001:1001

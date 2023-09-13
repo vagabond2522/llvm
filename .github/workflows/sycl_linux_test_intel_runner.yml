@@ -1,0 +1,74 @@
+name: SYCL Test Runner
+
+on:
+  push:
+
+jobs:
+  trivial:
+    runs-on: [Linux, arc]
+    steps:
+      - run: echo "Hello world"
+
+  build:
+    uses: ./.github/workflows/sycl_linux_build.yml
+    with:
+      build_ref: ${{ github.sha }}
+      merge_ref: ''
+      build_cache_root: "/__w/"
+      build_artifact_suffix: "default"
+      build_cache_suffix: "default"
+      changes: '[sycl]'
+      # To test docker build:
+      artifact_archive_name: sycl_linux.tar.gz
+      runner: '["Linux", "arc"]'
+
+  test:
+    uses: ./.github/workflows/sycl_linux_run_tests.yml
+    needs: [build]
+    with:
+      name: SYCL E2E on Intel Linux L0
+      runner: '["Linux", "arc"]'
+      image: ghcr.io/intel/llvm/ubuntu2204_intel_drivers:latest
+      image_options: -u 1001 --device=/dev/dri --privileged --cap-add SYS_ADMIN
+      target_devices: "ext_oneapi_level_zero:gpu;opencl:cpu;opencl:gpu"
+      ref: ${{ github.sha }}
+      merge_ref: ''
+      sycl_toolchain_artifact: sycl_linux_default
+      sycl_toolchain_archive: ${{ needs.build.outputs.artifact_archive_name }}
+      sycl_toolchain_decompress_command: ${{ needs.build.outputs.artifact_decompress_command }}
+      # env: '{"LIT_FILTER":"SPVDumpUse"}'
+      install_drivers: true
+
+  test-nightly:
+    uses: ./.github/workflows/sycl_linux_run_tests.yml
+    with:
+      name: SYCL E2E on Intel Linux L0 with Nightly image
+      runner: '["Linux", "arc"]'
+      image: ghcr.io/intel/llvm/sycl_ubuntu2204_nightly:latest
+      image_options: -u 1001 --device=/dev/dri --privileged --cap-add SYS_ADMIN
+      target_devices: ext_oneapi_level_zero:gpu
+      ref: ${{ github.sha }}
+      merge_ref: ''
+      env: '{"LIT_FILTER":"SPVDumpUse"}'
+
+  docker-build:
+    runs-on: [Linux, arc]
+    needs: [build]
+    steps:
+    - uses: actions/checkout@v3
+    - uses: actions/download-artifact@v3
+      with:
+        name: sycl_linux_default
+        path: devops/
+    - name: Build Container (no drivers)
+      uses: ./devops/actions/build_container
+      with:
+        file: ubuntu2204_preinstalled
+        username: ${{ github.repository_owner }}
+        password: ${{ secrets.GITHUB_TOKEN }}
+        build-args: |
+          base_image=ghcr.io/intel/llvm/ubuntu2204_base
+          base_tag=latest
+        tags: |
+          ghcr.io/${{ github.repository }}/sycl_ubuntu2204_nightly:no-drivers-${{ github.sha }}
+          ghcr.io/${{ github.repository }}/sycl_ubuntu2204_nightly:no-drivers
