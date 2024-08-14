@@ -606,7 +606,7 @@ template <typename Op, typename T>
 inline constexpr bool is_op_available = false;
 
 template <typename Lhs, typename Rhs, typename Op, int N>
-inline constexpr bool is_non_assign_binop_available = (N > 1);
+inline constexpr bool is_non_assign_binop_available = true;
 
 #define __SYCL_OP_AVAILABILITY(OP, COND)                                       \
   template <typename T> inline constexpr bool is_op_available<OP, T> = COND;
@@ -1164,7 +1164,7 @@ class __SYCL_EBO Swizzle
       // Conversion to scalar DataT for single-element swizzles:
       public ConversionOperatorMixin<Swizzle<VecT, Indexes...>,
                                      typename VecT::element_type,
-                                     /* Explicit = */ false,
+                                     /* Explicit = */ true,
                                      /* Enable = */ sizeof...(Indexes) == 1>,
       // Conversion to sycl::vec, must be available only when `NumElements > 1`
       // per the SYCL 2020 specification:
@@ -1320,7 +1320,7 @@ template <typename DataT, int NumElements>
 class __SYCL_EBO vec :
     // Conversion to scalar DataT for single-element vec:
     public detail::ConversionOperatorMixin<vec<DataT, NumElements>, DataT,
-                                           /* Explicit = */ false,
+                                           /* Explicit = */ true,
                                            /* Enable = */ NumElements == 1>,
 #ifdef __SYCL_DEVICE_ONLY__
     public detail::ConversionOperatorMixin<
@@ -1518,7 +1518,7 @@ public:
   template <typename asT> asT as() const { return sycl::bit_cast<asT>(*this); }
 
 private:
-  static constexpr bool one_elem_swizzle_return_scalar = false;
+  static constexpr bool one_elem_swizzle_return_scalar = true;
 
 public:
   template <int... SwizzleIndexes>
