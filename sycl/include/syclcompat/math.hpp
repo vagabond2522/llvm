@@ -187,7 +187,7 @@ inline constexpr RetT extend_vbinary2(AT a, BT b, RetT c,
   if constexpr (NeedAdd) {
     return temp[0] + temp[1] + c;
   }
-  return sycl::vec<IntT, 2>{temp[0], temp[1]}.template as<sycl::vec<RetT, 1>>();
+  return static_cast<RetT>(sycl::vec<IntT, 2>{temp[0], temp[1]}.template as<sycl::vec<RetT, 1>>());
 }
 
 template <typename RetT, bool NeedSat, bool NeedAdd, typename AT, typename BT,
@@ -213,8 +213,9 @@ inline constexpr RetT extend_vbinary4(AT a, BT b, RetT c,
     return temp[0] + temp[1] + temp[2] + temp[3] + c;
   }
 
-  return sycl::vec<IntT, 4>{temp[0], temp[1], temp[2], temp[3]}
-      .template as<sycl::vec<RetT, 1>>();
+  return static_cast<RetT>(
+      sycl::vec<IntT, 4>{temp[0], temp[1], temp[2], temp[3]}
+          .template as<sycl::vec<RetT, 1>>());
 }
 
 template <typename ValueT> inline bool isnan(const ValueT a) {
@@ -610,7 +611,7 @@ inline unsigned vectorized_unary(unsigned a, const UnaryOperation unary_op) {
   auto v1 = v0.as<VecT>();
   auto v2 = unary_op(v1);
   v0 = v2.template as<sycl::vec<unsigned, 1>>();
-  return v0;
+  return unsigned{v0};
 }
 
 /// Compute vectorized absolute difference for two values without modulo
@@ -663,7 +664,7 @@ inline unsigned vectorized_isgreater<sycl::ushort2, unsigned>(unsigned a,
   v4[0] = v2[0] > v3[0];
   v4[1] = v2[1] > v3[1];
   v0 = v4.template as<sycl::vec<unsigned, 1>>();
-  return v0;
+  return unsigned{v0};
 }
 
 /// Returns min(max(val, min_val), max_val)
@@ -989,7 +990,7 @@ inline unsigned vectorized_binary(unsigned a, unsigned b,
   auto v4 =
       detail::vectorized_binary<VecT, BinaryOperation>()(v2, v3, binary_op);
   v0 = v4.template as<sycl::vec<unsigned, 1>>();
-  return v0;
+  return unsigned{v0};
 }
 
 template <typename T1, typename T2>

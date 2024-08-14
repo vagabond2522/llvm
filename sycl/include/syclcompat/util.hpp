@@ -152,7 +152,7 @@ inline int cast_double_to_int(double d, bool use_high32 = true) {
 inline double cast_ints_to_double(int high32, int low32) {
   sycl::int2 v0{high32, low32};
   auto v1 = v0.as<sycl::vec<double, 1>>();
-  return v1;
+  return static_cast<double>(v1);
 }
 
 /// Reverse the bit order of an unsigned integer

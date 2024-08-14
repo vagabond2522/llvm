@@ -418,7 +418,7 @@ public:
 
   template <int Dims = Dimensions, typename = std::enable_if_t<Dims == 1>>
   range<1> get_range() const {
-    int Range = getRangeInternal();
+    int Range = static_cast<int>(getRangeInternal());
     return range<1>(Range);
   }
   template <int Dims = Dimensions, typename = std::enable_if_t<Dims == 2>>
